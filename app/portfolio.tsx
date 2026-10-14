@@ -76,7 +76,7 @@ function useVantaBirds() {
         separation: 28,
         alignment: 28,
         cohesion: 28,
-        quantity: 0.4,
+        quantity: 1.4,
       })
     })()
     return () => {
@@ -181,11 +181,11 @@ function Gear5Frame() {
   return (
     <ModelFrame
       id={GEAR5_ID}
-      title="Luffy Gear 5"
+      title="Pirate Hunter"
       loading={!rdy}
       loadingLabel="Awakening…"
       spinner="☀"
-      caption="⊕ Gear 5 · The Sun God · Interactive ⊕"
+      caption="⊕ BUG HUNTER ⊕"
       frameClass="gear-inner"
       onLoad={() => setRdy(true)}
     />
