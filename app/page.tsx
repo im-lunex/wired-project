@@ -1,19 +1,45 @@
-import { Button } from "@/components/ui/button"
+import Portfolio, { type Pr } from "./portfolio"
 
-export default function Page() {
-  return (
-    <div className="flex min-h-svh p-6">
-      <div className="flex max-w-md min-w-0 flex-col gap-4 text-sm leading-loose">
-        <div>
-          <h1 className="font-medium">Project ready!</h1>
-          <p>You may now add components and start building.</p>
-          <p>We&apos;ve already added the button component for you.</p>
-          <Button className="mt-2">Button</Button>
-        </div>
-        <div className="font-mono text-xs text-muted-foreground">
-          (Press <kbd>d</kbd> to toggle dark mode)
-        </div>
-      </div>
-    </div>
-  )
+async function fetchPrs(): Promise<Pr[]> {
+  try {
+    const headers: Record<string, string> = {
+      Accept: "application/vnd.github+json",
+      "User-Agent": "one-pce-portfolio",
+    }
+    const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN
+    if (token) headers.Authorization = `Bearer ${token}`
+
+    const res = await fetch(
+      "https://api.github.com/search/issues?q=author:im-lunex+type:pr&sort=updated&order=desc&per_page=100",
+      { headers, next: { revalidate: 3600 } },
+    )
+    if (!res.ok) return []
+    const data = await res.json()
+
+    return (data.items ?? [])
+      .filter(
+        (it: Record<string, unknown>) =>
+          it.state === "open" ||
+          ((it.pull_request as Record<string, unknown>)?.merged_at ?? null) !== null,
+      )
+      .map((it: Record<string, unknown>) => ({
+        number: it.number as number,
+        title: it.title as string,
+        repo: (it.repository_url as string).replace("https://api.github.com/repos/", ""),
+        state: (it.state === "open" ? "open" : "merged") as Pr["state"],
+        url: it.html_url as string,
+        createdAt: it.created_at as string,
+        mergedAt:
+          ((it.pull_request as Record<string, unknown>)?.merged_at as string | null) ?? null,
+        comments: (it.comments as number) ?? 0,
+      }))
+      .slice(0, 40)
+  } catch {
+    return []
+  }
+}
+
+export default async function HomePage() {
+  const prs = await fetchPrs()
+  return <Portfolio prs={prs} />
 }
